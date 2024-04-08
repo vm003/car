@@ -17,7 +17,7 @@ const app = express();
 //Connecting to Mongodb
 const db = async () => {
     try {
-        const conn = await mongoose.connect('mongodb://localhost:27017/autorizz', {
+        const conn = await mongoose.connect('mongodb://35.172.219.227:27017/autorizz', {
             useNewUrlParser: true,
             useUnifiedTopology: true,
             useFindAndModify: false
