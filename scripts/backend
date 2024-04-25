@@ -1,0 +1,87 @@
+##
+# You should look at the following URL's in order to grasp a solid understanding
+# of Nginx configuration files in order to fully unleash the power of Nginx.
+# https://www.nginx.com/resources/wiki/start/
+# https://www.nginx.com/resources/wiki/start/topics/tutorials/config_pitfalls/
+# https://wiki.debian.org/Nginx/DirectoryStructure
+#
+# In most cases, administrators will remove this file from sites-enabled/ and
+# leave it as reference inside of sites-available where it will continue to be
+# updated by the nginx packaging team.
+#
+# This file will automatically load configuration files provided by other
+# applications, such as Drupal or Wordpress. These applications will be made
+# available underneath a path with that package name, such as /drupal8.
+#
+# Please see /usr/share/doc/nginx-doc/examples/ for more detailed examples.
+##
+
+# Default server configuration
+#
+server {
+    listen 80;
+    server_name api.shriramfinance.in;
+    root /data/appserver/sfl/public;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-XSS-Protection "1; mode=block";
+    add_header X-Content-Type-Options "nosniff";
+
+    proxy_buffer_size 32k;
+    proxy_buffers 128 16k;
+    proxy_busy_buffers_size 64k;
+
+    #Directory Browsing Disable
+    autoindex off;
+    #Etag Disable
+    etag off;
+    #Server Name & Version Exposed
+    server_tokens off;
+    #HTTP Strict Transport Security Header Enable-----
+    add_header Strict-Transport-Security "max-age=31536000;includeSubDomains";
+    #Pragma Header Enable
+    add_header "Pragma" "no-cache";
+
+    add_header "Access-Control-Allow-Origin" "*" always;
+
+    #Custom headers and headers various browsers *should* be OK with but aren't
+    add_header "Access-Control-Allow-Headers" "Accept,Authorization,Cache-Control,Content-Type,DNT,If-Modified-Since,Keep-Alive,Origin,User-Agent,X-Requested-With,Content-Range,Range,Accept-Encoding,api-version,action" always;
+    
+    # Allowed HTTP Methods
+    add_header "Access-Control-Allow-Methods" "GET, POST, PUT, DELETE, OPTIONS" always;
+   
+    # For OPTIONS
+    if ($request_method = 'OPTIONS') {
+        #
+        # Tell client that this pre-flight info is valid for 20 days
+        #
+        #add_header 'Access-Control-Max-Age' 1728000;
+        return 204;
+    } 
+   # required to be able to read below header details in frontend
+    add_header "Access-Control-Expose-Headers" "Content-Type,api-version" always;  
+
+    index index.html index.htm index.php;
+
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    error_page 404 /index.php;
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php7.2-fpm.sock;
+        fastcgi_index index.php;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}   
